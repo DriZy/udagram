@@ -1,0 +1,111 @@
+
+Description: >
+  Tabi Idris / Udacity
+     This template create a S3 bucket using CloudFormation.
+
+Parameters:
+  EnvironmentName:
+      Description: An environment name that will be prefixed to resource names
+      Type: String
+
+Resources:
+  UdagramS3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: udacity-udagram
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Delete
+
+  S3UdagramPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UdagramS3
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: s3:*
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref "UdagramS3", "/*"]]
+            Principal:
+              AWS: "*"
+
+  S3KeyPar:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: udagram-key
+      AccessControl: Private
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+
+  S3KeyParPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3KeyPar
+      PolicyDocument:
+        Statement:
+          - Sid: AllowStaticObjectDownload
+            Action: s3:GetObject
+            Effect: Allow
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref "S3KeyPar", "/*"]]
+            Principal:
+              AWS: "*"
+          - Sid: PutObjectAccess
+            Action: s3:PutObject
+            Effect: Allow
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref "S3KeyPar", "/*"]]
+            Principal:
+              AWS: "*"
+  S3Logs:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: udagram-logs
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+
+  S3LogsPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Logs
+      PolicyDocument:
+        Statement:
+          - Sid: AllowStaticObjectDownload
+            Action: s3:GetObject
+            Effect: Allow
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref "S3Logs", "/*"]]
+            Principal:
+              AWS: "*"
+          - Sid: PutObjectAccess
+            Action: s3:PutObject
+            Effect: Allow
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref "S3Logs", "/*"]]
+            Principal:
+              AWS: "*"
+
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt [UdagramS3, WebsiteURL]
+    Description: URL for website hosted on S3
+  WebsiteSecureURL:
+    Value: !Join ["", ["https://", !GetAtt [UdagramS3, DomainName]]]
+    Description: Secure URL for website hosted on S3
+  S3KeyParT:
+    Value: !GetAtt [S3KeyPar, WebsiteURL]
+    Description: URL for key hosted on S3
+  S3KeyParTSecureURL:
+    Value: !Join ["", ["https://", !GetAtt [S3KeyPar, DomainName]]]
+    Description: Secure URL for key hosted on S3
+  S3Logs:
+    Value: !GetAtt [S3Logs, DomainName]
+    Description: URL for logs hosted on S3
+    Export:
+      Name: !Sub ${EnvironmentName}-S3-LOGS
+  S3LogsURL:
+    Value: !Join ["", ["https://", !GetAtt [S3Logs, DomainName]]]
+    Description: Secure URL for logs hosted on S3
