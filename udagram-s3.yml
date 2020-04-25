@@ -8,11 +8,26 @@ Parameters:
       Description: An environment name that will be prefixed to resource names
       Type: String
 
+  S3:
+      Description: Please enter the name for this S3 bucket
+      Type: String
+      Default: udacity-udagram
+
+  KeyPar:
+      Description: Please enter the name for this S3 bucket
+      Type: String
+      Default: udacity-key
+
+  S3Log:
+      Description: Please enter the name for this S3 bucket
+      Type: String
+      Default: udacity-logs
+
 Resources:
   UdagramS3:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: udacity-udagram
+      BucketName: !Ref S3
       AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
@@ -34,7 +49,7 @@ Resources:
   S3KeyPar:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: udagram-key
+      BucketName: !Ref KeyPar
       AccessControl: Private
       WebsiteConfiguration:
         IndexDocument: index.html
@@ -63,7 +78,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
-      BucketName: udagram-logs
+      BucketName: !Ref S3Log
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html

@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "EnvironmentName",
+    "ParameterValue": "Udagram"
+  },
+  {
+    "ParameterKey": "S3",
+    "ParameterValue": "udacity-udagram-s3"
+  },
+  {
+    "ParameterKey": "KeyPar",
+    "ParameterValue": "udagram-key"
+  },
+  {
+    "ParameterKey": "S3Log",
+    "ParameterValue": "udagram-s3-logs"
+  }
+]

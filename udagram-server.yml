@@ -1,3 +1,5 @@
+#Template referenced from https://github.com/aminueza/Udacity-HA-CloudFormation and https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/
+
 Description: >
     Tabi Idris / Udacity
     This template deploys the servers, with the apropriate security groups needed to define 
@@ -101,7 +103,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Subnets:
-      - Fn::ImportValue: !Sub "${EnvironmentName}c"
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
       - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
       SecurityGroups:
       - Ref: UdagramLBSecurityGroup
@@ -112,9 +114,9 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref UdagramTargetGroup
-          LoadBalancerArn: !Ref UdagramLB
-          Port: 80
-          Protocol: HTTP
+      LoadBalancerArn: !Ref UdagramLB
+      Port: 80
+      Protocol: HTTP
 
   UdagramLR:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -204,10 +206,6 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: "true"
-        WebACLId:
-          Fn::Join:
-            - ""
-            - - Fn::ImportValue: !Sub ${EnvironmentName}-WEBACL
 
 Outputs:
   Website:
