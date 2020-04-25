@@ -8,10 +8,10 @@ Parameters:
     Description: An environment name that will be prefixed to resource names
     Type: String
 
-#  SourceIP:
-#    Description: Ip address to allow SSH access to the bastion host
-#    Type: String
-#    Default: 90.191.9.164/32
+  SourceIP:
+    Description: Ip address to allow SSH access to the bastion host
+    Type: String
+    Default: 0.0.0.0/0
 
   S3BastionSSH:
     Description: Bucket which ssh key is hosted
@@ -71,7 +71,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: "22"
           ToPort: "22"
-#          CidrIp: !Sub ${SourceIP}
+          CidrIp: !Sub ${SourceIP}
 
   BastionEC20:
     Type: AWS::EC2::Instance
@@ -91,7 +91,7 @@ Resources:
       SecurityGroupIds:
         - Ref: BastionSecurityGroup
       SubnetId:
-        Fn::ImportValue: !Sub "${EnvironmentName}-PUB-NET0"
+        Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
       ImageId: ami-07b4f3c02c7f83d59
       InstanceType: t3.small
       KeyName: !Sub ${KeyBastionSSH}
@@ -136,7 +136,7 @@ Resources:
       SecurityGroupIds:
         - Ref: BastionSecurityGroup
       SubnetId:
-        Fn::ImportValue: !Sub "${EnvironmentName}-PUB-NET1"
+        Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
 
   EIP1:
     Type: AWS::EC2::EIP

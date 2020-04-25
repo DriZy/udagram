@@ -4,6 +4,7 @@ Description: >
 Parameters:
   EnvironmentName:
     Description: "An Environment name to tag resources"
+    Type: String
 
 Resources:
   IAMRoleUdagram:

@@ -38,29 +38,24 @@ Resources:
             !Sub "${EnvironmentName}-VPCID"
         SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: 80
+          ToPort: 80
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
-        SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 0
-          ToPort: 65535
           CidrIp:
-            Fn::ImportValue: !Sub ${EnvironmentName}-BASTION0-CIDR
-              - IpProtocol: tcp
-                FromPort: 22
-                ToPort: 22
-                CidrIp:
-                  Fn::ImportValue: !Sub ${EnvironmentName}-BASTION1-CIDR
-            SecurityGroupEgress:
-              - IpProtocol: tcp
-                FromPort: 0
-                ToPort: 65535
-                CidrIp: 0.0.0.0/0
+            Fn::ImportValue: !Sub "${EnvironmentName}-BASTION0-CIDR"
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp:
+            Fn::ImportValue: !Sub "${EnvironmentName}-BASTION1-CIDR"
+        SecurityGroupEgress:
+          - IpProtocol: tcp
+            FromPort: 0
+            ToPort: 65535
+            CidrIp: 0.0.0.0/0
           
   UdagramLaunchConfig:
       Type: AWS::AutoScaling::LaunchConfiguration
@@ -90,11 +85,11 @@ Resources:
             VolumeType: "gp2"
 
   UdagramASG:
-      Type: AWS::AUtoScaling::AutoScalingGroup
+      Type: AWS::AutoScaling::AutoScalingGroup
       Properties:
         VPCZoneIdentifier:
-        - Fn::ImportValue: !Sub "{EnvironmentName}-PRI1-SN"
-        - Fn::ImportValue: !Sub "{EnvironmentName}-PRI2-SN"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PRI1-SN"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"
         LaunchConfigurationName:
           Ref: UdagramLaunchConfig
         MinSize: 4
@@ -103,23 +98,23 @@ Resources:
          - Ref: UdagramTargetGroup
     
   UdagramLB:
-    Type: AWS::ElasticLoadBalincingV2::LoadBalancer
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Subnets:
-      - Fn::ImportValue: !Sub "{EnvironmentName}-PUB1-SN"
-      - Fn::ImportValue: !Sub "{EnvironmentName}-PUB2-SN"
+      - Fn::ImportValue: !Sub "${EnvironmentName}c"
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
       SecurityGroups:
       - Ref: UdagramLBSecurityGroup
   
   UdagramListenner:
-    Type: AWS::ElasticLoadBalincingV2::Listenner
+    Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref UdagramTargetGroup
-        LoadBalancerArn: !Ref UdagramLB
-        Port: 80
-        Protocol: HTTP
+          LoadBalancerArn: !Ref UdagramLB
+          Port: 80
+          Protocol: HTTP
 
   UdagramLR:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -163,6 +158,56 @@ Resources:
       VpcId: 
         Fn::ImportValue:
           Fn::Sub: "${EnvironmentName}-VPCID"
+
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt [UdagramLB, DNSName]
+            Id: !GetAtt [UdagramLB, DNSName]
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+        Enabled: "true"
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: "/error.html"
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: "/error.html"
+        DefaultRootObject: index.html
+        Logging:
+          IncludeCookies: "false"
+          Bucket:
+            Fn::Join:
+              - ""
+              - - Fn::ImportValue: !Sub ${EnvironmentName}-S3-LOGS
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+            Locations: []
+        DefaultCacheBehavior:
+          AllowedMethods: [HEAD, GET]
+          MinTTL: "0"
+          MaxTTL: "0"
+          DefaultTTL: "0"
+          TargetOriginId: !GetAtt [UdagramLB, DNSName]
+          SmoothStreaming: "false"
+          ForwardedValues:
+            QueryString: "true"
+          ViewerProtocolPolicy: allow-all
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: "true"
+        WebACLId:
+          Fn::Join:
+            - ""
+            - - Fn::ImportValue: !Sub ${EnvironmentName}-WEBACL
 
 Outputs:
   Website:
