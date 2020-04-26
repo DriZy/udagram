@@ -18,7 +18,7 @@ Resources:
     Properties:
         GroupDescription: Allow http to udagram load balancer
         VpcId:
-          Fn::ImportValue: 
+          Fn::ImportValue:
             !Sub "${EnvironmentName}-VPCID"
         SecurityGroupIngress:
         - IpProtocol: tcp
@@ -70,8 +70,9 @@ Resources:
              apt-get install apache2 -y
              systemctl start apache2.service
              sudo rm /var/www/html/index.html
-             sudo aws s3 cp s3://udacity-udagram/udagram.zip /var/www/html
-             sudo unzip /var/www/html/udagram.zip -d /var/www/html
+             cd /var/www/html
+             aws s3 cp s3://udacity-udagram-s3/udacity.zip .
+             unzip -o udacity.zip
              systemctl restart apache2.service
         ImageId: ami-06f2f779464715dc5
         IamInstanceProfile:
@@ -157,60 +158,16 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 5
-      VpcId: 
+      VpcId:
         Fn::ImportValue:
           Fn::Sub: "${EnvironmentName}-VPCID"
-
-
-  CloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Origins:
-          - DomainName: !GetAtt [UdagramLB, DNSName]
-            Id: !GetAtt [UdagramLB, DNSName]
-            CustomOriginConfig:
-              HTTPPort: 80
-              OriginProtocolPolicy: http-only
-        Enabled: "true"
-        CustomErrorResponses:
-          - ErrorCachingMinTTL: 0
-            ErrorCode: 404
-            ResponseCode: 200
-            ResponsePagePath: "/error.html"
-          - ErrorCachingMinTTL: 0
-            ErrorCode: 403
-            ResponseCode: 200
-            ResponsePagePath: "/error.html"
-        DefaultRootObject: index.html
-        Logging:
-          IncludeCookies: "false"
-          Bucket:
-            Fn::Join:
-              - ""
-              - - Fn::ImportValue: !Sub ${EnvironmentName}-S3-LOGS
-        Restrictions:
-          GeoRestriction:
-            RestrictionType: none
-            Locations: []
-        DefaultCacheBehavior:
-          AllowedMethods: [HEAD, GET]
-          MinTTL: "0"
-          MaxTTL: "0"
-          DefaultTTL: "0"
-          TargetOriginId: !GetAtt [UdagramLB, DNSName]
-          SmoothStreaming: "false"
-          ForwardedValues:
-            QueryString: "true"
-          ViewerProtocolPolicy: allow-all
-        PriceClass: PriceClass_100
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: "true"
 
 Outputs:
   Website:
     Description: The Public DNS for the EC2 Instance
     Value: !Join ["", ["http://", !GetAtt [UdagramLB, DNSName]]]
+    Export:
+      Name: !Sub ${EnvironmentName}-UdagramLB-DNSName
 
   UdagramAppASG:
     Description: "Group ID of Auto Scaling Group Reference ID"
