@@ -17,3 +17,6 @@
 - Run ./create-stack.sh your-stack-name udagram-bastion.yml udagram-bastion-params-json 
 - Run ./create-stack.sh your-stack-name udagram-server.yml udagram-server-params-json    
    
+#Result
+- View result via the 
+    http://Udagr-Udagr-P7Q6G0XF2L4X-2034264455.us-west-2.elb.amazonaws.com	
